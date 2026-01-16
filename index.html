@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bangla Text to Image Generator - ARS</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Rubik+Moonrocks&family=Noto+Sans+Bengali:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+  * {margin:0;padding:0;box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    font-family:'Noto Sans Bengali',Arial,sans-serif;
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding:2rem;
+  }
+  .container{
+    background:#fff;
+    border-radius:15px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+    padding:3rem;
+    max-width:960px;
+    width:100%;
+    margin:auto;
+  }
+  h1{font-size:2.5rem;text-align:center;color:#333;margin-bottom:.5rem;}
+  .subtitle{text-align:center;color:#777;margin-bottom:2rem;font-size:.95rem;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem;}
+  .left-panel,.right-panel{display:flex;flex-direction:column;gap:1.5rem;}
+  label{font-weight:600;font-size:1rem;color:#333;margin-bottom:.5rem;display:block;}
+  textarea,input[type=text],input[type=number],select{
+    width:100%;padding:1rem;border:2px solid #ddd;border-radius:8px;font-size:1rem;transition:border-color .3s;
+  }
+  textarea{resize:vertical;min-height:100px;}
+  textarea:focus,input:focus{outline:none;border-color:#667eea;box-shadow:0 0 5px rgba(102,126,234,.3);}
+  .template-group .templates{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem;}
+  .template-btn{
+    padding:1rem;background:#fff;border:2px solid #ddd;border-radius:8px;cursor:pointer;
+    font-size:.9rem;text-align:left;transition:all .3s;
+  }
+  .template-btn:hover{border-color:#667eea;background:#f0f4ff;}
+  .template-btn.active{border-color:#667eea;background:#667eea;color:#fff;}
+  .color-group{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:flex-end;}
+  .color-picker{width:50px;height:45px;border:2px solid #ddd;border-radius:8px;cursor:pointer;background:#fff;}
+  .font-size-control{display:grid;grid-template-columns:1fr 60px;gap:.8rem;align-items:center;}
+  input[type=range]{width:100%;}
+  .size-display{background:#f0f4ff;color:#667eea;font-weight:600;padding:.5rem;border-radius:6px;text-align:center;}
+  .watermark-section,.advanced-section{background:#f9f9f9;padding:1.5rem;border-radius:10px;border:2px solid #eee;margin-bottom:1rem;}
+  .watermark-section h3,.advanced-section h3{font-size:1.1rem;color:#333;margin-bottom:1rem;}
+  .watermark-inputs,.watermark-input-group{display:flex;flex-direction:column;gap:.5rem;}
+  .feature-toggle{display:flex;justify-content:space-between;align-items:center;padding:.8rem;background:#fff;border-radius:6px;margin-bottom:1rem;cursor:pointer;}
+  .toggle-switch{position:relative;width:50px;height:28px;background:#ddd;border-radius:14px;transition:background .3s;}
+  .toggle-switch.active{background:#4CAF50;}
+  .toggle-slider{position:absolute;top:2px;left:2px;width:24px;height:24px;background:#fff;border-radius:50%;transition:left .3s;}
+  .toggle-switch.active .toggle-slider{left:24px;}
+  .button-group{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-top:2rem;}
+  button{
+    padding:1rem;font-size:1rem;border:none;border-radius:8px;cursor:pointer;transition:all .3s;
+    font-weight:600;display:flex;align-items:center;justify-content:center;gap:.5rem;
+  }
+  #generateBtn{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:#fff;grid-column:1/4;}
+  #generateBtn:hover{transform:translateY(-2px);box-shadow:0 10px 20px rgba(102,126,234,.3);}
+  #downloadBtn,#copyBtn,#resetBtn{display:none;}
+  #downloadBtn{background:#4CAF50;color:#fff;}
+  #downloadBtn:hover{background:#45a049;}
+  #copyBtn{background:#2196F3;color:#fff;}
+  #copyBtn:hover{background:#0b7dda;}
+  #resetBtn{background:#f44336;color:#fff;}
+  #resetBtn:hover{background:#da190b;}
+  #status{margin-top:1.5rem;padding:1rem;border-radius:8px;font-size:.95rem;display:none;}
+  #status.show{display:block;}
+  #status.success{background:#d4edda;color:#155724;border:1px solid #c3e6cb;}
+  #status.error{background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;}
+  #status.loading{background:#d1ecf1;color:#0c5460;border:1px solid #bee5eb;}
+  .preview-section{margin-top:2rem;padding:2rem;background:#f9f9f9;border-radius:10px;display:none;}
+  .preview-section.active{display:block;}
+  .preview-section h3{text-align:center;margin-bottom:1rem;color:#333;}
+  #outputCanvas{max-width:600px;width:100%;border:2px solid #ddd;border-radius:8px;box-shadow:0 5px 15px rgba(0,0,0,.1);display:block;margin:auto;}
+  footer{
+    background:rgba(0,0,0,.2);color:#fff;text-align:center;padding:2rem;margin-top:auto;border-top:1px solid rgba(255,255,255,.1);
+  }
+  footer a{color:#ffeb3b;text-decoration:none;transition:color .3s;}
+  footer a:hover{color:#fff;}
+  @media (max-width:768px){
+    .form-grid{grid-template-columns:1fr;}
+    .templates{grid-template-columns:1fr;}
+    .button-group{grid-template-columns:1fr;}
+    #generateBtn{grid-column:1;}
+    h1{font-size:1.8rem;}
+  }
+  .loader{border:4px solid #f3f3f3;border-top:4px solid #667eea;border-radius:50%;width:20px;height:20px;animation:spin 1s linear infinite;}
+  @keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+</style>
+</head>
+
+<body>
+
+<div class="main-content">
+  <div class="container">
+    <h1>✨ বাংলা ইমেজ জেনারেটর</h1>
+    <p class="subtitle">আপনার বাংলা লেখা সুন্দর ছবিতে রূপান্তরিত করুন - Facebook পোস্টের জন্য উপযুক্ত</p>
+
+    <form id="textForm">
+      <div class="form-grid">
+        <!-- LEFT PANEL -->
+        <div class="left-panel">
+          <!-- TEXT INPUT -->
+          <div class="form-group">
+            <label for="textInput"><i class="fas fa-pen"></i> আপনার বাংলা লেখা লিখুন:</label>
+            <textarea id="textInput" placeholder="উদাহরণ: আমার নাম আবদুর রহমান" required></textarea>
+          </div>
+
+          <!-- TEMPLATE SELECTION -->
+          <div class="template-group">
+            <label><i class="fas fa-palette"></i> টেমপ্লেট নির্বাচন করুন:</label>
+            <div class="templates">
+              <!-- Facebook style -->
+              <button type="button" class="template-btn active" data-template="facebook-blue"><div class="template-name">📱 Facebook Blue</div><div class="template-desc">নীল পটভূমি</div></button>
+              <button type="button" class="template-btn" data-template="facebook-trending"><div class="template-name">🔥 Trending</div><div class="template-desc">উজ্জ্বল লাল</div></button>
+              <button type="button" class="template-btn" data-template="facebook-gradient"><div class="template-name">🎨 Gradient</div><div class="template-desc">গ্রেডিয়েন্ট</div></button>
+              <button type="button" class="template-btn" data-template="facebook-dark"><div class="template-name">🌙 Dark Mode</div><div class="template-desc">অন্ধকার থিম</div></button>
+              <button type="button" class="template-btn" data-template="facebook-light"><div class="template-name">☀️ Light</div><div class="template-desc">হালকা পটভূমি</div></button>
+              <button type="button" class="template-btn" data-template="facebook-quote"><div class="template-name">💬 Quote</div><div class="template-desc">উদ্ধৃতি স্টাইল</div></button>
+
+              <!-- New modern / abstract styles -->
+              <button type="button" class="template-btn" data-template="abstract-geo"><div class="template-name">🟢 Geometric</div><div class="template-desc">আধুনিক জ্যামিতিক</div></button>
+              <button type="button" class="template-btn" data-template="abstract-neon"><div class="template-name">⚡ Neon</div><div class="template-desc">নিয়ন গ্লো</div></button>
+              <button type="button" class="template-btn" data-template="abstract-minimal"><div class="template-name">⚪ Minimal</div><div class="template-desc">মিনিমাল স্টাইল</div></button>
+            </div>
+          </div>
+
+          <!-- WATERMARK TEXT -->
+          <div class="watermark-section">
+            <h3><i class="fas fa-water"></i> টেক্সট ওয়াটারমার্ক কাস্টমাইজেশন</h3>
+            <div class="watermark-inputs">
+              <div class="watermark-input-group">
+                <label for="watermarkTopLeft">🔝 উপরের বাম কোণ:</label>
+                <input type="text" id="watermarkTopLeft" placeholder="উদাহরণ: © ARS" value="ARS">
+              </div>
+              <div class="watermark-input-group">
+                <label for="watermarkBottomRight">🔻 নিচের ডান কোণ:</label>
+                <input type="text" id="watermarkBottomRight" placeholder="উদাহরণ: Abdur Rahman" value="Abdur Rahman Sheikh">
+              </div>
+            </div>
+          </div>
+
+          <!-- IMAGE WATERMARK (UPLOAD) -->
+          <div class="watermark-section">
+            <h3><i class="fas fa-image"></i> ছবি ওয়াটারমার্ক (ঐচ্ছিক)</h3>
+            <input type="file" id="imageWatermark" accept="image/*" style="border:none;">
+            <small>আপলোড করা ছবিটি স্বয়ংক্রিয়ভাবে মাঝখানে বসবে (30 % প্রস্থ) এবং 30 % অপাসিটি থাকবে।</small>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="right-panel">
+          <!-- COLOR CUSTOMIZATION -->
+          <div class="form-group">
+            <label><i class="fas fa-swatches"></i> রঙ কাস্টমাইজেশন</label>
+            <div class="color-group"><label style="font-size:.9rem;margin-bottom:.3rem;">পটভূমি রঙ:</label><input type="color" id="bgColor" class="color-picker" value="#1877f2"></div>
+            <div class="color-group" style="margin-top:1rem;"><label style="font-size:.9rem;margin-bottom:.3rem;">লেখার রঙ:</label><input type="color" id="textColor" class="color-picker" value="#ffffff"></div>
+            <div class="color-group" style="margin-top:1rem;"><label style="font-size:.9rem;margin-bottom:.3rem;">ওয়াটারমার্ক রঙ:</label><input type="color" id="watermarkColor" class="color-picker" value="#ff5722"></div>
+          </div>
+
+          <!-- FONT SIZE -->
+          <div class="form-group">
+            <label for="fontSize"><i class="fas fa-text-height"></i> ফন্ট সাইজ:</label>
+            <div class="font-size-control">
+              <input type="range" id="fontSize" min="20" max="100" value="40">
+              <span class="size-display" id="sizeDisplay">40px</span>
+            </div>
+          </div>
+
+          <!-- ADVANCED FEATURES -->
+          <div class="advanced-section">
+            <h3><i class="fas fa-cogs"></i> উন্নত বৈশিষ্ট্য</h3>
+            <div class="feature-toggle"><span>ছবির চারপাশে বর্ডার:</span><div class="toggle-switch active" data-feature="border"><div class="toggle-slider"></div></div></div>
+            <div class="feature-toggle"><span>ছায়া প্রভাব:</span><div class="toggle-switch active" data-feature="shadow"><div class="toggle-slider"></div></div></div>
+            <div class="feature-toggle"><span>পটভূমি প্যাটার্ন:</span><div class="toggle-switch" data-feature="pattern"><div class="toggle-slider"></div></div></div>
+            <div class="feature-toggle"><span>কেন্দ্রীয় সমন্বয়:</span><div class="toggle-switch active" data-feature="centered"><div class="toggle-slider"></div></div></div>
+          </div>
+
+          <!-- IMAGE DIMENSIONS -->
+          <div class="form-group">
+            <label><i class="fas fa-expand"></i> ছবির আকার (Facebook):</label>
+            <select id="imageDimension" style="padding:.8rem;border:2px solid #ddd;border-radius:8px;">
+              <option value="1200x628">Feed Post (1200×628)</option>
+              <option value="1080x1080">Square (1080×1080)</option>
+              <option value="1200x1500">Portrait (1200×1500)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUTTONS -->
+      <div class="button-group">
+        <button type="submit" id="generateBtn"><i class="fas fa-magic"></i> ইমেজ তৈরি করুন</button>
+        <button type="button" id="downloadBtn"><i class="fas fa-download"></i> ডাউনলোড করুন</button>
+        <button type="button" id="copyBtn"><i class="fas fa-copy"></i> কপি করুন</button>
+        <button type="button" id="resetBtn"><i class="fas fa-undo"></i> রিসেট</button>
+      </div>
+    </form>
+
+    <!-- STATUS MESSAGE -->
+    <div id="status"></div>
+
+    <!-- PREVIEW -->
+    <div class="preview-section" id="previewSection">
+      <h3>📸 প্রিভিউ:</h3>
+      <canvas id="outputCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>এই সাইট তৈরি করেছেন <strong>ARS (Abdur Rahman Sheikh)</strong> ভালোবাসা দিয়ে ❤<br>
+  <small>© 2024 Bangla Text Image Generator. সকল অধিকার সংরক্ষিত।</small></p>
+  <p><a href="https://github.com/your-repo">GitHub (প্রোজেক্ট সোর্স)</a></p>
+</footer>
+
+<script>
+/* ---------- GLOBAL STATE ---------- */
+const form               = document.getElementById('textForm');
+const textInput          = document.getElementById('textInput');
+const bgColorInput       = document.getElementById('bgColor');
+const textColorInput     = document.getElementById('textColor');
+const watermarkColorInput= document.getElementById('watermarkColor');
+const fontSizeInput      = document.getElementById('fontSize');
+const sizeDisplay        = document.getElementById('sizeDisplay');
+const generateBtn        = document.getElementById('generateBtn');
+const downloadBtn        = document.getElementById('downloadBtn');
+const copyBtn            = document.getElementById('copyBtn');
+const resetBtn           = document.getElementById('resetBtn');
+const canvas             = document.getElementById('outputCanvas');
+const status             = document.getElementById('status');
+const previewSection     = document.getElementById('previewSection');
+const templateBtns       = document.querySelectorAll('.template-btn');
+const toggleSwitches     = document.querySelectorAll('.toggle-switch');
+const watermarkTopLeftInput = document.getElementById('watermarkTopLeft');
+const watermarkBottomRightInput = document.getElementById('watermarkBottomRight');
+const imageDimensionSelect = document.getElementById('imageDimension');
+const imageWatermarkInput = document.getElementById('imageWatermark');
+
+let currentTemplate = 'facebook-blue';
+let features = {border:true, shadow:true, pattern:false, centered:true};
+let uploadedImg = null;          // Image object for the uploaded watermark
+
+/* ---------- TEMPLATE PRESets ---------- */
+const templates = {
+  'facebook-blue'   : {bg:'#1877f2', txt:'#ffffff', fs:40, wm:'#ffd700'},
+  'facebook-trending':{bg:'#ff6b6b', txt:'#ffffff', fs:42, wm:'#ffeb3b'},
+  'facebook-gradient':{bg:'#667eea', txt:'#ffffff', fs:40, wm:'#764ba2'},
+  'facebook-dark'   : {bg:'#1a1a1a', txt:'#ffffff', fs:40, wm:'#00d4ff'},
+  'facebook-light'  : {bg:'#f5f5f5', txt:'#333333', fs:40, wm:'#ff5722'},
+  'facebook-quote'  : {bg:'#fff9e6', txt:'#d32f2f', fs:42, wm:'#ff6f00'},
+  // NEW ABSTRACT TEMPLATES
+  'abstract-geo'    : {bg:'#2e3440', txt:'#eceff4', fs:38, wm:'#81a1c1'},
+  'abstract-neon'   : {bg:'#0f0c29', txt:'#e0e0e0', fs:44, wm:'#ff6ec7'},
+  'abstract-minimal':{bg:'#ffffff', txt:'#222222', fs:40, wm:'#888888'}
+};
+
+/* ---------- UI INITIALISATION ---------- */
+function applyTemplate(preset) {
+  bgColorInput.value       = preset.bg;
+  textColorInput.value     = preset.txt;
+  fontSizeInput.value      = preset.fs;
+  watermarkColorInput.value= preset.wm;
+  sizeDisplay.textContent  = `${preset.fs}px`;
+}
+applyTemplate(templates['facebook-blue']);
+
+/* ---------- EVENT LISTENERS ---------- */
+// Font‑size live update
+fontSizeInput.addEventListener('input', e => sizeDisplay.textContent = `${e.target.value}px`);
+
+// Template selection
+templateBtns.forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    templateBtns.forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTemplate = btn.dataset.template;
+    applyTemplate(templates[currentTemplate]);
+  });
+});
+
+// Feature toggles
+toggleSwitches.forEach(toggle => {
+  toggle.addEventListener('click', () => {
+    toggle.classList.toggle('active');
+    const feature = toggle.dataset.feature;
+    features[feature] = toggle.classList.contains('active');
+  });
+});
+
+// Reset button
+resetBtn.addEventListener('click', () => {
+  form.reset();
+  // Reset to default template
+  templateBtns.forEach(b=>b.classList.remove('active'));
+  document.querySelector('.template-btn[data-template="facebook-blue"]').classList.add('active');
+  currentTemplate = 'facebook-blue';
+  applyTemplate(templates['facebook-blue']);
+  // Reset feature flags
+  features = {border:true, shadow:true, pattern:false, centered:true};
+  toggleSwitches.forEach(t=>{ if(t.dataset.feature!=='pattern') t.classList.add('active'); else t.classList.remove('active'); });
+  uploadedImg = null;
+  previewSection.classList.remove('active');
+  downloadBtn.style.display = 'none';
+  copyBtn.style.display = 'none';
+  showStatus('✅ সব সেটিং রিসেট হয়েছে', 'success');
+});
+
+/* ---------- IMAGE WATERMARK UPLOAD ---------- */
+imageWatermarkInput.addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) { uploadedImg = null; return; }
+  const img = new Image();
+  img.onload = () => { uploadedImg = img; };
+  img.onerror = () => { uploadedImg = null; showStatus('❌ ছবি লোড করতে ব্যর্থ', 'error'); };
+  img.src = URL.createObjectURL(file);
+});
+
+/* ---------- STATUS HELPER ---------- */
+function showStatus(msg, type='loading'){
+  status.textContent = msg;
+  status.className = `show ${type}`;
+  if(type==='success' || type==='error'){
+    setTimeout(()=> status.classList.remove('show'), 3000);
+  }
+}
+
+/* ---------- MAIN IMAGE GENERATOR ---------- */
+function generateImage(text){
+  const bgColor       = bgColorInput.value;
+  const textColor     = textColorInput.value;
+  const fontSize      = parseInt(fontSizeInput.value);
+  const watermarkColor= watermarkColorInput.value;
+  const wmTopLeft     = watermarkTopLeftInput.value || 'ARS';
+  const wmBottomRight = watermarkBottomRightInput.value || 'Abdur Rahman Sheikh';
+  const [w, h]        = imageDimensionSelect.value.split('x').map(Number);
+
+  canvas.width  = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+
+  // ---- BACKGROUND -------------------------------------------------
+  if(currentTemplate === 'facebook-gradient'){
+    const grad = ctx.createLinearGradient(0,0,w,h);
+    grad.addColorStop(0,bgColor);
+    grad.addColorStop(1,watermarkColor);
+    ctx.fillStyle = grad;
+  }else{
+    ctx.fillStyle = bgColor;
+  }
+  ctx.fillRect(0,0,w,h);
+
+  // ---- OPTIONAL PATTERN -------------------------------------------
+  if(features.pattern){
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    const step = 50;
+    for(let i=0;i<w;i+=step){
+      for(let j=0;j<h;j+=step){
+        ctx.fillRect(i,j,step*0.8,step*0.8);
+      }
+    }
+  }
+
+  // ---- SHADOW ------------------------------------------------------
+  if(features.shadow){
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.shadowBlur  = 20;
+    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetY = 5;
+  }else{
+    ctx.shadowColor = 'transparent';
+  }
+
+  // ---- MAIN TEXT ---------------------------------------------------
+  ctx.fillStyle = textColor;
+  ctx.font = `bold ${fontSize}px 'Noto Sans Bengali',Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const centerY = features.centered ? h/2 : h/2 - 40;
+  wrapText(ctx, text, w/2, centerY, w*0.85, fontSize+15);
+
+  // ---- RESET SHADOW -----------------------------------------------
+  ctx.shadowColor = 'transparent';
+
+  // ---- BORDER ------------------------------------------------------
+  if(features.border){
+    ctx.strokeStyle = textColor;
+    ctx.lineWidth   = 3;
+    ctx.globalAlpha = 0.5;
+    ctx.strokeRect(15,15,w-30,h-30);
+    ctx.globalAlpha = 1.0;
+  }
+
+  // ---- TEXT WATERMARKS (inner offset) -------------------------------
+  const offset = 30;   // 30 px inside the canvas edge
+  ctx.fillStyle = watermarkColor;
+  ctx.font = `bold 20px 'Noto Sans Bengali',Arial`;
+  ctx.globalAlpha = 0.8;
+
+  // top‑left
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(wmTopLeft, offset, offset);
+
+  // bottom‑right
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(wmBottomRight, w - offset, h - offset);
+  ctx.globalAlpha = 1.0;
+
+  // ---- IMAGE WATERMARK (center, wash‑out) -------------------------
+  if(uploadedImg){
+    const maxW = w * 0.3;                 // max 30 % of canvas width
+    const scale = Math.min(1, maxW / uploadedImg.width);
+    const imgW = uploadedImg.width * scale;
+    const imgH = uploadedImg.height * scale;
+    const x = (w - imgW) / 2;
+    const y = (h - imgH) / 2;
+    ctx.globalAlpha = 0.3;                // wash‑out effect
+    ctx.drawImage(uploadedImg, x, y, imgW, imgH);
+    ctx.globalAlpha = 1.0;
+  }
+}
+
+/* ---------- TEXT WRAP HELPER ---------- */
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(/\s+/);
+  let line = '';
+  const lines = [];
+  for(let n=0; n<words.length; n++){
+    const test = line + words[n] + ' ';
+    if(ctx.measureText(test).width > maxWidth && n>0){
+      lines.push(line.trim());
+      line = words[n] + ' ';
+    }else{
+      line = test;
+    }
+  }
+  lines.push(line.trim());
+
+  const startY = y - (lines.length-1) * lineHeight / 2;
+  for(let i=0; i<lines.length; i++){
+    ctx.fillText(lines[i], x, startY + i*lineHeight);
+  }
+}
+
+/* ---------- FORM SUBMIT ---------- */
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  const txt = textInput.value.trim();
+  if(!txt){
+    showStatus('❌ অনুগ্রহ করে কিছু লেখা লিখুন!', 'error');
+    return;
+  }
+  showStatus('🎬 ইমেজ তৈরি করা হচ্ছে...', 'loading');
+
+  // Simulate short processing delay (you can remove setTimeout if not needed)
+  setTimeout(()=>{
+    generateImage(txt);
+    showStatus('✅ ইমেজ সফলভাবে তৈরি হয়েছে!', 'success');
+    previewSection.classList.add('active');
+    downloadBtn.style.display = 'inline-flex';
+    copyBtn.style.display    = 'inline-flex';
+  },500);
+});
+
+/* ---------- DOWNLOAD ---------- */
+downloadBtn.addEventListener('click', ()=>{
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png');
+  link.download = `bangla-image-${Date.now()}.png`;
+  link.click();
+  showStatus('✅ ইমেজ ডাউনলোড হয়েছে!', 'success');
+});
+
+/* ---------- COPY TO CLIPBOARD ---------- */
+copyBtn.addEventListener('click', ()=>{
+  canvas.toBlob(blob=>{
+    navigator.clipboard.write([
+      new ClipboardItem({'image/png':blob})
+    ]).then(()=>showStatus('✅ ইমেজ ক্লিপবোর্ডে কপি হয়েছে!', 'success'))
+      .catch(()=>showStatus('❌ কপি করতে সমস্যা হয়েছে', 'error'));
+  });
+});
+</script>
+
+</body>
+</html>
